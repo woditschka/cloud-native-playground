@@ -1,0 +1,32 @@
+# Cloud Native Sandbox
+
+## tl;dr
+
+Run a small application with log-stream and monitoring infrastructure.
+
+```
+docker-compose up --force-recreate
+```
+
+### Application
+
+Spring Boot Application with
+
+- Logging in structured logstash json format
+- Prometheus metrics endpoint
+
+### Log Stream
+
+Elastic Stack
+
+- Kibana
+- Elasticsearch
+- Logstash
+- Filebeat
+
+### Metrics
+
+- Prometheus
+- Grafana
+
+

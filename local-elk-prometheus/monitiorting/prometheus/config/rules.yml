@@ -1,0 +1,13 @@
+groups:
+  - name: node_rules
+    rules:
+      - record: job:up:avg
+        expr: avg without(instance)(up{job="node"})
+      - alert: ManyInstancesDown
+        expr: job:up:avg{job="node"} < 0.5
+  - name: go_rules
+    rules:
+      - record: job:go_memstats_heap_objects:rate5m
+        expr: rate(go_memstats_heap_objects[5m])
+      - alert: "Go heap Object Rate"
+        expr: job:go_memstats_heap_objects:rate5m > 800

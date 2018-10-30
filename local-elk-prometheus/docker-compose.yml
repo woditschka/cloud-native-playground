@@ -1,0 +1,116 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+    volumes:
+      - ./logging/elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: "single-node"
+    networks:
+      - backend
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.4.2
+    ports:
+      - "5601:5601"
+    networks:
+      - backend
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.4.2
+    volumes:
+      - ./logging/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - backend
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:6.4.2
+    volumes:
+      - ./logging/filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logging/filebeat/data:/usr/share/filebeat/data
+      - ./application/logs:/var/log/filebeat/
+    networks:
+      - backend
+    depends_on:
+      - logstash
+      - application
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitiorting/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitiorting/prometheus/config/rules.yml:/etc/prometheus/rules.yml:ro
+      - ./monitiorting/prometheus/data:/prometheus-data
+    ports:
+      - "9090:9090"
+    networks:
+      - backend
+    depends_on:
+      - cadvisor
+      - application
+
+  alertmanager:
+    image: prom/alertmanager
+    volumes:
+      - ./monitiorting/alertmanager/config/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: google/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8180:8080"
+    networks:
+      - backend
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - backend
+
+  application:
+    image: quay.io/woditschka/tfa-web
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms128m -Dlogging.config=/opt/config/logback.xml"
+    volumes:
+      - ./application/logs:/opt/logs:rw
+      - ./application/config:/opt/config
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

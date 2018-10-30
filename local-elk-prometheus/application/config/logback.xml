@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+  <appender name="logstash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/opt/logs/application.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/opt/logs/application-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>10</maxHistory>
+    </rollingPolicy>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="logstash" />
+  </root>
+</configuration>
